@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:test_app/constants/routes.dart';
-import 'package:test_app/views/home_page_view.dart';
+import 'package:test_app/views/notes/new_note_view.dart';
+import 'package:test_app/views/notes/notes_view.dart';
 
 import 'package:test_app/views/login_view.dart';
 import 'package:test_app/views/register_view.dart';
@@ -11,7 +12,8 @@ import 'package:test_app/services/auth/auth_service.dart';
 Map<String, WidgetBuilder> routes = {
   "/$loginRoute": (context) => const LoginView(),
   "/$registerRoute": (context) => const RegisterView(),
-  "/$notesRoute": (context) => const HomePageView(),
+  "/$notesRoute": (context) => const NotesView(),
+  "/$newNoteRoute": (context) => const NewNoteView(),
   "/$baseRoute": (context) => const HomePage(),
 };
 
@@ -42,7 +44,7 @@ class HomePage extends StatelessWidget {
             final user = AuthService.firebase().currentUser;
             if (user != null) {
               if (user.isEmailVerified) {
-                return const HomePageView();
+                return const NotesView();
               } else {
                 return const VerifyEmailView();
               }
