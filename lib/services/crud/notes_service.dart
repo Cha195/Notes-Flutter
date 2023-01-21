@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' show join;
+import 'package:test_app/utilities/extensions/filter.dart';
 
 import '../../constants/crud.dart';
 import './crud_exceptions.dart';
@@ -11,6 +12,8 @@ import 'database_user.dart';
 
 class NotesService {
   Database? _db;
+
+  DatabaseUser? _user;
 
   List<DatabaseNote> _notes = [];
 
@@ -26,7 +29,16 @@ class NotesService {
   }
   factory NotesService() => _shared;
 
-  Stream<List<DatabaseNote>> get allNotes => _notesStreamController.stream;
+  // GET ALL NOTES
+  Stream<List<DatabaseNote>> get allNotes =>
+      _notesStreamController.stream.filter((note) {
+        final currentUser = _user;
+        if (currentUser != null) {
+          return note.userId == currentUser.id;
+        } else {
+          throw UserShouldBeSetBeforeReadingAllNotes();
+        }
+      });
 
   Future<void> _ensureDbIsOpen() async {
     try {
@@ -105,10 +117,15 @@ class NotesService {
     await getNote(id: note.id);
 
     // update DB
-    final updatesCount = await db.update(noteTable, {
-      textColumn: text,
-      isSyncedWithCloudColumn: 0,
-    });
+    final updatesCount = await db.update(
+      noteTable,
+      {
+        textColumn: text,
+        isSyncedWithCloudColumn: 0,
+      },
+      where: 'id = ?',
+      whereArgs: [note.id],
+    );
 
     if (updatesCount == 0) {
       throw CouldNotUpdateNote();
@@ -176,13 +193,21 @@ class NotesService {
   }
 
   // USERS
-
-  Future<DatabaseUser> getOrCreateUser({required String email}) async {
+  Future<DatabaseUser> getOrCreateUser({
+    required String email,
+    bool setAsCurrentUser = true,
+  }) async {
     try {
       final user = await getUser(email: email);
+      if (setAsCurrentUser) {
+        _user = user;
+      }
       return user;
     } on CouldNotFindUser {
       final createdUser = await createUser(email: email);
+      if (setAsCurrentUser) {
+        _user = createdUser;
+      }
       return createdUser;
     } catch (e) {
       rethrow;
