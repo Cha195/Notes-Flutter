@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:test_app/constants/routes.dart';
 import 'package:test_app/services/auth/auth_service.dart';
 import 'package:test_app/services/crud/notes_service.dart';
+import 'package:test_app/views/notes/notes_list_view.dart';
 
 import '../../enums/menu_action.dart';
-import '../../utilities/show_logout_dialog.dart';
+import '../../services/crud/database_notes.dart';
+import '../../utilities/dialogs/show_logout_dialog.dart';
 
 class NotesView extends StatefulWidget {
   const NotesView({super.key});
@@ -23,12 +25,6 @@ class _NotesViewState extends State<NotesView> {
     _notesService = NotesService();
     _notesService.open();
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    _notesService.close();
-    super.dispose();
   }
 
   @override
@@ -71,7 +67,16 @@ class _NotesViewState extends State<NotesView> {
                 return StreamBuilder(builder: ((context, snapshot) {
                   switch (snapshot.connectionState) {
                     case ConnectionState.waiting:
-                      return const Text("Waiting for notes");
+                      if (snapshot.hasData) {
+                        final allNotes = snapshot.data as List<DatabaseNote>;
+                        return NotesListVoew(
+                            notes: allNotes,
+                            onDeleteNote: ((note) async {
+                              await _notesService.deleteNote(id: note.id);
+                            }));
+                      } else {
+                        return const CircularProgressIndicator();
+                      }
                     default:
                       return const CircularProgressIndicator();
                   }

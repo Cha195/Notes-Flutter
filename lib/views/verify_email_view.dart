@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/routes.dart';
 import '../enums/menu_action.dart';
-import '../utilities/show_logout_dialog.dart';
+import '../utilities/dialogs/show_logout_dialog.dart';
 
 class VerifyEmailView extends StatefulWidget {
   const VerifyEmailView({super.key});
