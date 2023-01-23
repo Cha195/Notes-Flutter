@@ -34,53 +34,56 @@ class _LoginViewState extends State<LoginView> {
     return Scaffold(
       appBar: AppBar(title: const Text("Login")),
       body: Center(
-        child: Column(
-          children: [
-            TextField(
-              controller: _email,
-              autocorrect: false,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(hintText: "Email"),
-            ),
-            TextField(
-                controller: _password,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: [
+              TextField(
+                controller: _email,
                 autocorrect: false,
-                enableSuggestions: false,
-                obscureText: true,
-                decoration: const InputDecoration(hintText: "Password")),
-            TextButton(
-              onPressed: () async {
-                String emailValue = _email.text;
-                String passwordValue = _password.text;
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(hintText: "Email"),
+              ),
+              TextField(
+                  controller: _password,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  obscureText: true,
+                  decoration: const InputDecoration(hintText: "Password")),
+              TextButton(
+                onPressed: () async {
+                  String emailValue = _email.text;
+                  String passwordValue = _password.text;
 
-                try {
-                  await AuthService.firebase()
-                      .logIn(email: emailValue, password: passwordValue);
-                  final user = AuthService.firebase().currentUser;
-                  if (user?.isEmailVerified ?? false) {
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/$notesRoute', (route) => false);
-                  } else {
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/$baseRoute', (route) => false);
+                  try {
+                    await AuthService.firebase()
+                        .logIn(email: emailValue, password: passwordValue);
+                    final user = AuthService.firebase().currentUser;
+                    if (user?.isEmailVerified ?? false) {
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                          '/$notesRoute', (route) => false);
+                    } else {
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                          '/$baseRoute', (route) => false);
+                    }
+                  } on UserNotFoundAuthException {
+                    await showErrorDialog(context, 'User Not Found');
+                  } on WrongPasswordAuthException {
+                    await showErrorDialog(context, 'Password is wrong');
+                  } on GenericAuthException {
+                    await showErrorDialog(context, 'Authentication Error');
                   }
-                } on UserNotFoundAuthException {
-                  await showErrorDialog(context, 'User Not Found');
-                } on WrongPasswordAuthException {
-                  await showErrorDialog(context, 'Password is wrong');
-                } on GenericAuthException {
-                  await showErrorDialog(context, 'Authentication Error');
-                }
-              },
-              child: const Text("Login"),
-            ),
-            TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/$registerRoute', (route) => false);
                 },
-                child: const Text("Don't have an account? Register"))
-          ],
+                child: const Text("Login"),
+              ),
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/$registerRoute', (route) => false);
+                  },
+                  child: const Text("Don't have an account? Register"))
+            ],
+          ),
         ),
       ),
     );
