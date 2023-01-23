@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:test_app/firebase_options.dart';
 import 'package:test_app/services/auth/auth_user.dart';
 import 'package:test_app/services/auth/auth_provider.dart';
@@ -7,12 +8,70 @@ import 'package:test_app/services/auth/auth_exceptions.dart';
 import 'package:firebase_auth/firebase_auth.dart'
     show FirebaseAuth, FirebaseAuthException;
 
+import '../../utilities/push_notifications.dart';
+
 class FirebaseAuthProvider implements AuthProvider {
+  late final FirebaseMessaging _messaging;
+  PushNotification? _notificationInfo;
+
+  // NOTIFICATIONS!
+  void registerNotification() async {
+    // 2. Instantiate Firebase Messaging
+    _messaging = FirebaseMessaging.instance;
+
+    await _messaging.setForegroundNotificationPresentationOptions(
+      alert: true, // Required to display a heads up notification
+      badge: true,
+      sound: true,
+    );
+
+    // 3. On iOS, this helps to take the user permissions
+    NotificationSettings settings = await _messaging.requestPermission(
+      alert: true,
+      badge: true,
+      provisional: false,
+      sound: true,
+    );
+
+    final fcmToken = await _messaging.getToken();
+    print(fcmToken);
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        // Parse the message received
+        _notificationInfo = PushNotification(
+          title: message.notification?.title,
+          body: message.notification?.body,
+        );
+        print(_notificationInfo!.body);
+      });
+    } else {
+      print('User declined or has not accepted permission');
+    }
+  }
+
+  checkForInitialMessage() async {
+    await Firebase.initializeApp();
+    RemoteMessage? initialMessage =
+        await FirebaseMessaging.instance.getInitialMessage();
+
+    if (initialMessage != null) {
+      PushNotification notification = PushNotification(
+        title: initialMessage.notification?.title,
+        body: initialMessage.notification?.body,
+      );
+
+      _notificationInfo = notification;
+    }
+  }
+
   @override
   Future<void> initialize() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    registerNotification();
+    checkForInitialMessage();
   }
 
   @override
