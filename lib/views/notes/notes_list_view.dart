@@ -30,6 +30,12 @@ class NotesListView extends StatelessWidget {
             softWrap: true,
             overflow: TextOverflow.ellipsis,
           ),
+          subtitle: Text(
+            note.address,
+            maxLines: 1,
+            softWrap: true,
+            overflow: TextOverflow.fade,
+          ),
           onTap: () {
             onTapNote(note);
           },

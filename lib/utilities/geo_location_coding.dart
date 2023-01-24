@@ -1,41 +1,39 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'dart:developer' as dev;
 
 class GeoLocationCoding {
-  late Position _currentPosition;
-  late String _currentAddress;
-
-  GeoLocation() {
-    _getCurrentLocation();
-    _getAddressFromLatLng();
-  }
-
-  void _getCurrentLocation() {
-    Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.best,
-            forceAndroidLocationManager: true)
-        .then((Position position) {
-      _currentPosition = position;
-    }).catchError((e) {
-      print(e);
-    });
-  }
-
-  void _getAddressFromLatLng() async {
+  late String _currentAddress = '';
+  Future<Position?> _getCurrentLocation() async {
+    dev.log("Getting position");
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-          _currentPosition.latitude, _currentPosition.longitude);
-
-      Placemark place = placemarks[0];
-
-      _currentAddress =
-          "${place.locality}, ${place.postalCode}, ${place.country}";
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+        forceAndroidLocationManager: true,
+      );
+      dev.log(position.toString());
+      return position;
     } catch (e) {
-      print(e);
+      dev.log(e.toString());
     }
   }
 
-  String getCurrentAddress() {
-    return _currentAddress;
+  Future<String> getCurrentAddress() async {
+    if(_currentAddress != '') {
+      return _currentAddress;
+    }
+    dev.log("Getting address");
+    final position = await _getCurrentLocation();
+
+    if (position != null) {
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
+
+      Placemark place = placemarks[0];
+      _currentAddress =  "${place.locality}, ${place.postalCode}, ${place.country}";
+      return _currentAddress;
+    } else {
+      return 'Address Not Available';
+    }
   }
 }
