@@ -5,6 +5,7 @@ import 'package:test_app/services/cloud/cloud_note.dart';
 import 'package:test_app/services/cloud/firebase_cloud_storage.dart';
 import 'package:test_app/utilities/dialogs/show_cannot_share_empty_note_dialog.dart';
 import 'package:test_app/utilities/generics/get_arguments.dart';
+import 'dart:developer' as dev;
 
 class CreateUpdateNoteView extends StatefulWidget {
   const CreateUpdateNoteView({Key? key}) : super(key: key);
@@ -44,7 +45,6 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
 
   Future<CloudNote> createOrGetExistingNote(BuildContext context) async {
     final widgetNote = context.getArgument<CloudNote>();
-
     if (widgetNote != null) {
       _note = widgetNote;
       _textController.text = widgetNote.text;
@@ -55,8 +55,10 @@ class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
     if (existingNote != null) {
       return existingNote;
     }
+
     final currentUser = AuthService.firebase().currentUser!;
     final userId = currentUser.id;
+
     final newNote = await _notesService.createNewNote(ownerUserId: userId);
     _note = newNote;
     return newNote;

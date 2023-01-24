@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:test_app/services/cloud/cloud_note.dart';
 import 'package:test_app/services/cloud/cloud_storage_constants.dart';
 import 'package:test_app/services/cloud/cloud_storage_exceptions.dart';
+import 'package:test_app/utilities/geo_location_coding.dart';
+import 'dart:developer' as dev;
 
 class FirebaseCloudStorage {
   static final FirebaseCloudStorage _shared =
@@ -10,6 +12,7 @@ class FirebaseCloudStorage {
   factory FirebaseCloudStorage() => _shared;
 
   final notes = FirebaseFirestore.instance.collection('notes');
+  final GeoLocationCoding geoLocatorCoder = GeoLocationCoding();
 
   Future<void> deleteNote({required String documentId}) async {
     try {
@@ -19,12 +22,15 @@ class FirebaseCloudStorage {
     }
   }
 
-  Future<void> updateNote({
-    required String documentId,
-    required String text,
-  }) async {
+  Future<void> updateNote(
+      {required String documentId, required String text}) async {
+    final address = await geoLocatorCoder.getCurrentAddress();
+    dev.log(address);
     try {
-      await notes.doc(documentId).update({textFieldName: text});
+      await notes.doc(documentId).update({
+        textFieldName: text,
+        addressFieldName: address,
+      });
     } catch (e) {
       throw CouldNotUpdateNoteException();
     }
@@ -57,12 +63,14 @@ class FirebaseCloudStorage {
     final document = await notes.add({
       ownerUserIdFieldName: ownerUserId,
       textFieldName: '',
+      addressFieldName: 'Address Not Available',
     });
     final fetchedNote = await document.get();
     return CloudNote(
       text: '',
       ownerUserId: ownerUserId,
       documentId: fetchedNote.id,
+      address: 'Address Not Available',
     );
   }
 }

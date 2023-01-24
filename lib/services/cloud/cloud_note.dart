@@ -7,8 +7,10 @@ class CloudNote {
   final String text;
   final String ownerUserId;
   final String documentId;
+  final String address;
 
   const CloudNote({
+    this.address = 'Address Not Available',
     required this.text,
     required this.ownerUserId,
     required this.documentId,
@@ -17,5 +19,6 @@ class CloudNote {
   CloudNote.fromSnapshot(QueryDocumentSnapshot<Map<String, dynamic>> snapshot)
       : documentId = snapshot.id,
         ownerUserId = snapshot.data()[ownerUserIdFieldName],
-        text = snapshot.data()[textFieldName] as String;
+        text = snapshot.data()[textFieldName] as String,
+        address = snapshot.data()[addressFieldName] ?? 'Address Not Available';
 }
