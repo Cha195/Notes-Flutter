@@ -15,13 +15,15 @@ class GeoLocationCoding {
       }
     }
     if (permission == LocationPermission.deniedForever) {
-      return Future.error('Location permissions are permanently denied, we cannot request permissions.');
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
     }
     return await Geolocator.getCurrentPosition();
   }
 
   Future<String> getCurrentAddress() async {
     if (_currentAddress != '') {
+      dev.log(_currentAddress);
       return _currentAddress;
     }
     dev.log("Getting address");

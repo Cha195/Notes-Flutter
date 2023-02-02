@@ -1,18 +1,23 @@
-// import 'dart:developer' as dev;
+import 'dart:developer' as dev;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:test_app/constants/navigator_key.dart';
 
-import '../utilities/push_notification_model.dart';
+import '../constants/routes.dart';
 
 class FirebasePushNotifications {
   late final FirebaseMessaging _messaging;
-  PushNotification? _notificationInfo;
 
   void initialize() {
     registerNotification();
     checkForInitialMessage();
+  }
+
+  static Future<void> onTapNotification(NotificationResponse? response) async {
+    if (response == null && response!.payload == null) return;
+    navigatorKey.currentState?.pushNamed("/$createOrUpdateNoteRoute");
   }
 
   registerNotification() async {
@@ -39,7 +44,8 @@ class FirebasePushNotifications {
     );
 
     // Initialize FLN
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onDidReceiveNotificationResponse: onTapNotification);
 
     // Create channel for Android Heads-up notification
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -57,7 +63,7 @@ class FirebasePushNotifications {
 
     // Instantiate Firebase Messaging
     _messaging = FirebaseMessaging.instance;
-    // dev.log((await _messaging.getToken()).toString());
+    dev.log((await _messaging.getToken()).toString());
 
     await _messaging.setForegroundNotificationPresentationOptions(
       alert: true, // Required to display a heads up notification
@@ -80,21 +86,17 @@ class FirebasePushNotifications {
 
         if (notification != null && android != null) {
           flutterLocalNotificationsPlugin.show(
-              notification.hashCode,
-              notification.title,
-              notification.body,
-              NotificationDetails(
-                android: AndroidNotificationDetails(channel.id, channel.name,
-                    channelDescription: channel.description,
-                    icon: android.smallIcon,
-                    importance: Importance.max),
-              ));
+            notification.hashCode,
+            notification.title,
+            notification.body,
+            NotificationDetails(
+              android: AndroidNotificationDetails(channel.id, channel.name,
+                  channelDescription: channel.description,
+                  icon: android.smallIcon,
+                  importance: Importance.max),
+            ),
+          );
         }
-
-        _notificationInfo = PushNotification(
-          title: message.notification?.title,
-          body: message.notification?.body,
-        );
       });
     } else {
       print('User declined or has not accepted permission');
@@ -103,16 +105,6 @@ class FirebasePushNotifications {
 
   checkForInitialMessage() async {
     await Firebase.initializeApp();
-    RemoteMessage? initialMessage =
-        await FirebaseMessaging.instance.getInitialMessage();
-
-    if (initialMessage != null) {
-      PushNotification notification = PushNotification(
-        title: initialMessage.notification?.title,
-        body: initialMessage.notification?.body,
-      );
-
-      _notificationInfo = notification;
-    }
+    await FirebaseMessaging.instance.getInitialMessage();
   }
 }

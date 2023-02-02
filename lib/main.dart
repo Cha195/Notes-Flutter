@@ -9,6 +9,8 @@ import 'package:test_app/views/verify_email_view.dart';
 
 import 'package:test_app/services/auth/auth_service.dart';
 
+import 'constants/navigator_key.dart';
+
 Map<String, WidgetBuilder> routes = {
   "/$loginRoute": (context) => const LoginView(),
   "/$registerRoute": (context) => const RegisterView(),
@@ -22,6 +24,7 @@ void main() {
   runApp(
     MaterialApp(
       title: 'PP',
+      navigatorKey: navigatorKey,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
